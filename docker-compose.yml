@@ -1,0 +1,22 @@
+# Postgres 16 with the pgvector extension, for this project only.
+# Port 5434 on your Mac, so it never clashes with the Postgres already installed (EDB, on 5433).
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: insurance-assistant-db
+    environment:
+      POSTGRES_USER: assistant
+      POSTGRES_PASSWORD: assistant
+      POSTGRES_DB: assistant
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # data survives `docker compose down` (but not `down -v`)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U assistant -d assistant"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  pgdata:

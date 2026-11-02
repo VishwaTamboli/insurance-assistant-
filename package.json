@@ -1,0 +1,48 @@
+{
+  "name": "insurance-assistant",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Multi-agent health insurance policy assistant, built with LangGraph (learning project)",
+  "type": "module",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test:understanding": "node --import tsx --test test/understanding.test.ts",
+    "test:llm": "node --import tsx --test test/llm.test.ts",
+    "test:reducers": "node --import tsx --test test/graph-reducers.test.ts",
+    "test:retrieval": "node --import tsx --test test/retrieve.test.ts",
+    "test:graph": "node --import tsx --test test/graph-edges.test.ts",
+    "test:integration": "node --import tsx/esm src/graph/integration-test.ts",
+    "api": "tsx src/api/server.ts",
+    "api:check": "tsx src/api/scenario-check.ts",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d --wait && npm run db:migrate",
+    "db:migrate": "tsx src/db/migrate.ts",
+    "db:psql": "psql -h localhost -p 5432 -U vishwa -d insurance_policy",
+    "ingest": "tsx src/ingestion/ingest.ts",
+    "ingest:preview": "tsx src/ingestion/preview.ts",
+    "try:embeddings": "tsx src/llm/try-embeddings.ts",
+    "try:in-force": "tsx src/retrieval/try-policy-in-force.ts",
+    "try:search": "tsx src/retrieval/try-search.ts",
+    "eval:recall": "tsx src/eval/recall.ts",
+    "try:pdf": "tsx src/ingestion/try-pdf.ts",
+    "try:graph": "tsx src/graph/try-graph.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/pg": "^8.23.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.3.0",
+    "@langchain/google-genai": "^2.3.4",
+    "@langchain/langgraph": "^1.5.3",
+    "@langchain/textsplitters": "^1.0.2",
+    "pg": "^8.23.1",
+    "unpdf": "^1.9.1"
+  }
+}
