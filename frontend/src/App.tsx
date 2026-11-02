@@ -11,7 +11,7 @@ import { TurnView } from './components/TurnView';
 export function App() {
   const [planCode, setPlanCode] = useState('GOLD');
   const [jurisdiction, setJurisdiction] = useState('FR');
-  const { turns, send, pending, cancel } = useChat();
+  const { turns, send, pending, cancel, reset } = useChat();
   const endRef = useRef<HTMLDivElement>(null);
 
   // Keep the newest turn in view as the conversation grows.
@@ -19,43 +19,59 @@ export function App() {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [turns]);
 
+  const suggestions = ['Am I covered for emergency treatment abroad?', 'What needs pre-authorisation?', 'What are my waiting periods?'];
+
   return (
-    <div className="flex h-screen flex-col bg-slate-100">
-      <header className="rounded-none bg-slate-900 px-4 py-4 text-white shadow-lg sm:px-6">
-        <div className="mx-auto max-w-3xl">
-          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight">Insurance Policy Assistant</h1>
-              <p className="text-xs text-slate-300">Answers grounded in your policy documents, with citations.</p>
-            </div>
-            <PolicyBar
-              planCode={planCode}
-              jurisdiction={jurisdiction}
-              onPlanChange={setPlanCode}
-              onJurisdictionChange={setJurisdiction}
-            />
-          </div>
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="brand-lockup">
+          <div className="brand-mark" aria-hidden="true">+</div>
+          <div><strong>coverly</strong><span>policy copilot</span></div>
         </div>
-      </header>
+        <button type="button" className="new-chat-button" onClick={reset} disabled={pending}>
+          <span aria-hidden="true">＋</span> New conversation
+        </button>
+        <div className="sidebar-label">Recent conversations</div>
+        <nav className="history-list" aria-label="Conversation history">
+          {turns.length === 0 ? <p className="history-empty">Your conversations will appear here.</p> : turns.map(turn => (
+            <button type="button" className="history-item" key={turn.id} onClick={() => document.getElementById(`turn-${turn.id}`)?.scrollIntoView({ behavior: 'smooth' })}>
+              <span className="history-dot" aria-hidden="true" />
+              <span>{turn.question}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="sidebar-footer"><span className="secure-dot" /> Policy-grounded answers</div>
+      </aside>
 
-      <main className="mx-auto w-full max-w-3xl flex-1 space-y-4 overflow-y-auto px-4 py-6 sm:px-6">
-        {turns.length === 0 && (
-          <div className="rounded-xl border border-slate-200 bg-white p-5 text-center shadow-sm">
-            <p className="text-sm text-slate-600">
-              Ask a question about your {planCode} {jurisdiction} policy — for example emergency treatment
-              abroad, pre-authorisation for planned surgery, or waiting periods.
-            </p>
-          </div>
-        )}
-        {turns.map(turn => (
-          <TurnView key={turn.id} turn={turn} onCancel={cancel} />
-        ))}
-        <div ref={endRef} />
-      </main>
+      <section className="workspace">
+        <header className="topbar">
+          <div className="mobile-brand"><div className="brand-mark small" aria-hidden="true">+</div><strong>coverly</strong></div>
+          <div className="topbar-title"><span className="eyebrow">PERSONAL COVERAGE</span><h1>Insurance copilot</h1></div>
+          <PolicyBar planCode={planCode} jurisdiction={jurisdiction} onPlanChange={setPlanCode} onJurisdictionChange={setJurisdiction} />
+        </header>
 
-      <div className="mx-auto w-full max-w-3xl px-4 pt-2 pb-4 sm:px-6">
-        <Composer disabled={pending} onSubmit={question => void send(question, { planCode, jurisdiction })} />
-      </div>
+        <main className="conversation" aria-live="polite">
+          {turns.length === 0 && (
+            <div className="welcome-state">
+              <div className="welcome-icon" aria-hidden="true">✦</div>
+              <p className="eyebrow">YOUR POLICY, MADE CLEAR</p>
+              <h2>How can I help with your coverage?</h2>
+              <p className="welcome-copy">Ask a question about your policy and get a clear answer grounded in your plan documents.</p>
+              <div className="suggestion-grid">
+                {suggestions.map(suggestion => <button type="button" key={suggestion} onClick={() => void send(suggestion, { planCode, jurisdiction })}>{suggestion}<span aria-hidden="true">→</span></button>)}
+              </div>
+              <div className="trust-note"><span className="secure-dot" /> Answers are checked against your policy before they reach you.</div>
+            </div>
+          )}
+          {turns.map(turn => <div id={`turn-${turn.id}`} key={turn.id}><TurnView turn={turn} onCancel={cancel} /></div>)}
+          <div ref={endRef} />
+        </main>
+
+        <div className="composer-dock">
+          <Composer disabled={pending} onSubmit={question => void send(question, { planCode, jurisdiction })} />
+          <p className="composer-hint">AI can make mistakes. Check your policy documents for important decisions.</p>
+        </div>
+      </section>
     </div>
   );
 }

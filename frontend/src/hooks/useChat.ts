@@ -91,7 +91,13 @@ export function useChat() {
     for (const controller of controllers.current.values()) controller.abort();
   }, []);
 
-  return { turns, send, pending, cancel };
+  const reset = useCallback(() => {
+    for (const controller of controllers.current.values()) controller.abort();
+    controllers.current.clear();
+    setTurns([]);
+  }, []);
+
+  return { turns, send, pending, cancel, reset };
 }
 
 // Previous turns, most recent last, capped at the 8 the API accepts. A turn counts only

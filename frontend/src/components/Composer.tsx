@@ -21,7 +21,7 @@ export function Composer({ disabled, onSubmit }: Props) {
   return (
     <form
       onSubmit={submit}
-      className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg"
+      className="composer"
     >
       <textarea
         value={draft}
@@ -35,14 +35,14 @@ export function Composer({ disabled, onSubmit }: Props) {
         rows={1}
         placeholder="Ask about your cover, pre-authorisation or waiting periods…"
         aria-label="Your insurance question"
-        className="max-h-40 min-h-[2.5rem] flex-1 resize-none bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none"
+        className="composer-input"
       />
       <button
         type="submit"
         disabled={!allows}
-        className="rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-40"
+        className="send-button"
       >
-        {disabled ? 'Checking…' : 'Ask'}
+        <span aria-hidden="true">{disabled ? '◌' : '↑'}</span>{disabled ? 'Checking…' : 'Send'}
       </button>
     </form>
   );

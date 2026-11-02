@@ -18,8 +18,9 @@ const LABELS: Record<StageName, string> = {
 
 export function StageTrail({ progress, policy }: { progress: StageProgress[]; policy: PolicyInfo | null }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-sm">
-      <div className="space-y-1.5">
+    <div className="stage-trail">
+      <div className="stage-heading"><span className="pulse-dot" /> Preparing your answer <span>LIVE</span></div>
+      <div className="stage-list">
         {progress.map(({ stage, audit }, index) => (
           <StageRow
             key={index}
@@ -41,15 +42,13 @@ function countOf(stage: StageName, progress: StageProgress[], throughIndex: numb
 
 function StageRow({ step, active, revised }: { step: StageProgress; active: boolean; revised: boolean }) {
   return (
-    <div className="flex items-center gap-2 leading-5">
+    <div className={`stage-row ${active ? 'active' : 'complete'}`}>
       {active ? (
-        <span aria-hidden className="h-2.5 w-2.5 shrink-0 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
+        <span aria-hidden className="stage-spinner" />
       ) : (
-        <span aria-hidden className="text-emerald-500">
-          ✓
-        </span>
+        <span aria-hidden className="stage-check">✓</span>
       )}
-      <span className={active ? 'text-slate-700' : 'text-slate-400'}>
+      <span className="stage-label">
         {step.stage === 'research' && revised ? 'Reviewing the revised draft' : LABELS[step.stage]}
       </span>
       {step.audit?.verdict && <VerdictChip verdict={step.audit.verdict} />}
@@ -58,15 +57,9 @@ function StageRow({ step, active, revised }: { step: StageProgress; active: bool
 }
 
 // The auditor's verdict, the only word the UI adds on its own: pass / revise / reject.
-const VERDICT_STYLES: Record<'pass' | 'revise' | 'reject', string> = {
-  pass: 'bg-emerald-100 text-emerald-700',
-  revise: 'bg-amber-100 text-amber-700',
-  reject: 'bg-rose-100 text-rose-700',
-};
-
 function VerdictChip({ verdict }: { verdict: 'pass' | 'revise' | 'reject' }) {
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${VERDICT_STYLES[verdict]}`}>
+    <span className={`verdict-chip ${verdict}`}>
       {verdict}
     </span>
   );
@@ -76,8 +69,8 @@ function VerdictChip({ verdict }: { verdict: 'pass' | 'revise' | 'reject' }) {
 function PolicyRow({ policy }: { policy: PolicyInfo | null }) {
   const resolved = policy !== null;
   return (
-    <div className={`mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 ${resolved ? 'bg-sky-50 text-sky-800' : 'bg-rose-50 text-rose-700'}`}>
-      <span aria-hidden>{resolved ? '📄' : '⚠️'}</span>
+    <div className={`policy-row ${resolved ? 'resolved' : 'missing'}`}>
+      <span aria-hidden>{resolved ? '▣' : '!'}</span>
       <span>
         {resolved ? (
           <>

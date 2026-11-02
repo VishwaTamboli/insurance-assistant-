@@ -14,19 +14,18 @@ export function AnswerCard({ response }: { response: AnswerResponse }) {
   const badge = STATUS_BADGE[response.status];
 
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+    <article className={`answer-card status-${response.status}`}>
       {badge && (
-        <div className={`mb-3 inline-block rounded-full border px-2.5 py-0.5 text-xs font-medium ${badge.className}`}>
-          {badge.label}
+        <div className="status-badge"><span aria-hidden="true">{response.status === 'human-review' ? '◷' : '!'}</span>{badge.label}
         </div>
       )}
 
       {response.policy && <PolicyHeading policy={response.policy} />}
 
-      <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-800 sm:text-[15px]">{response.answer}</p>
+      <p className="answer-copy">{response.answer}</p>
 
       {response.status === 'answered' && response.unanswered.length > 0 && (
-        <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        <p className="unanswered-note">
           Your policy doesn't answer part of this question. Our team can check the rest:
         </p>
       )}
@@ -50,8 +49,8 @@ function PolicyHeading({ policy }: { policy: AnswerResponse['policy'] }) {
     );
   }
   return (
-    <div className="mb-3 inline-flex flex-wrap items-baseline gap-x-2 rounded-lg bg-sky-50 px-3 py-1.5 text-xs text-sky-800">
-      <span className="font-semibold">{policy.title}</span>
+    <div className="policy-context">
+      <span>▣</span><strong>{policy.title}</strong>
       <span>
         version {policy.version}, effective from {policy.effectiveFrom}
       </span>
@@ -62,12 +61,11 @@ function PolicyHeading({ policy }: { policy: AnswerResponse['policy'] }) {
 // The sections `[1]`, `[2]`… in the answer text stand for, in order.
 function Citations({ citations }: { citations: string[] }) {
   return (
-    <div className="mt-4 border-t border-slate-100 pt-3">
-      <h3 className="text-xs font-semibold tracking-wide text-slate-500 uppercase">Cited sections</h3>
-      <ol className="mt-1.5 space-y-1 text-xs text-slate-600">
+    <div className="citations">
+      <h3>Cited sections</h3>
+      <ol>
         {citations.map((section, index) => (
-          <li key={section} className="flex gap-2">
-            <span className="font-semibold text-slate-400">[{index + 1}]</span>
+          <li key={section}><span>[{index + 1}]</span>
             {section}
           </li>
         ))}
@@ -79,15 +77,14 @@ function Citations({ citations }: { citations: string[] }) {
 // The actual policy wording each citation rests on, folded away to keep the chat calm.
 function Sources({ sources }: { sources: AnswerResponse['sources'] }) {
   return (
-    <details className="mt-2 text-xs">
-      <summary className="cursor-pointer font-semibold tracking-wide text-slate-500 uppercase hover:text-slate-700">
-        Source sections ({sources.length})
+    <details className="sources">
+      <summary>View policy wording <span>({sources.length} {sources.length === 1 ? 'section' : 'sections'})</span>
       </summary>
-      <div className="mt-2 space-y-2">
+      <div className="source-list">
         {sources.map(source => (
-          <details key={source.id} className="rounded-lg bg-slate-50 px-3 py-2">
-            <summary className="cursor-pointer text-slate-700">{source.section}</summary>
-            <p className="mt-1.5 whitespace-pre-wrap text-slate-600">{source.content}</p>
+          <details key={source.id} className="source-item">
+            <summary>{source.section}<span>+</span></summary>
+            <p>{source.content}</p>
           </details>
         ))}
       </div>
@@ -99,8 +96,7 @@ function Sources({ sources }: { sources: AnswerResponse['sources'] }) {
 function AuditNote({ verdict, confidence, revisions }: { verdict: 'pass' | 'revise' | 'reject' | null; confidence: number; revisions: number }) {
   if (verdict !== 'pass' || confidence === 0) return null;
   return (
-    <p className="mt-3 text-[11px] text-slate-400">
-      Verified against the policy text with {Math.round(confidence * 100)}% confidence
+    <p className="audit-note"><span aria-hidden="true">✓</span> Verified against policy text · {Math.round(confidence * 100)}% confidence
       {revisions > 0 ? ` (${revisions} revision${revisions > 1 ? 's' : ''})` : ''}.
     </p>
   );

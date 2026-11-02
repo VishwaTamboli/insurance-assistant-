@@ -15,13 +15,13 @@ interface Props {
 
 export function PolicyBar({ planCode, jurisdiction, onPlanChange, onJurisdictionChange }: Props) {
   return (
-    <div className="flex flex-wrap items-center gap-3 text-sm">
-      <label className="flex items-center gap-1.5">
-        <span className="text-slate-500">Plan</span>
+    <div className="policy-picker">
+      <label className="picker-field">
+        <span>Plan</span>
         <select
           value={planCode}
           onChange={event => onPlanChange(event.target.value)}
-          className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-slate-100 focus:border-sky-400 focus:outline-none"
+          className="policy-select"
         >
           {PLANS.map(plan => (
             <option key={plan} value={plan}>
@@ -30,12 +30,12 @@ export function PolicyBar({ planCode, jurisdiction, onPlanChange, onJurisdiction
           ))}
         </select>
       </label>
-      <label className="flex items-center gap-1.5">
-        <span className="text-slate-500">Country</span>
+      <label className="picker-field">
+        <span>Country</span>
         <select
           value={jurisdiction}
           onChange={event => onJurisdictionChange(event.target.value)}
-          className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-slate-100 focus:border-sky-400 focus:outline-none"
+          className="policy-select"
         >
           {JURISDICTIONS.map(code => (
             <option key={code} value={code}>
