@@ -1,4 +1,4 @@
-import { findPolicyInForce } from '../../retrieval/policy-in-force.ts';
+import { findPoliciesInForce, findPolicyInForce } from '../../retrieval/policy-in-force.ts';
 import { hybridSearch, type SearchHit } from '../../retrieval/search.ts';
 import type { GraphState, GraphUpdate } from '../state.ts';
 import { heading } from './log.ts';
@@ -14,25 +14,37 @@ type SearchFunction = typeof hybridSearch;
 // wording can sneak in. Repeats are fine: the evidence reducer drops them.
 export async function retrieve(state: GraphState): Promise<GraphUpdate> {
   const { planCode, jurisdiction, treatmentDate } = state;
-  const policy = await findPolicyInForce(planCode, jurisdiction, treatmentDate);
+  // Policy resolution is independent for the member and comparison plan. Resolve both
+  // before searching so a comparison does not add an avoidable full lookup round-trip.
+  const comparisonCode = state.intent?.secondaryPlanCode;
+  const compareAll = state.intent?.topic === 'comparison' && comparisonCode === null;
+  const [policy, comparison, available] = await Promise.all([
+    findPolicyInForce(planCode, jurisdiction, treatmentDate),
+    comparisonCode
+      ? findPolicyInForce(comparisonCode, jurisdiction, treatmentDate)
+      : Promise.resolve(null),
+    compareAll ? findPoliciesInForce(jurisdiction, treatmentDate) : Promise.resolve([]),
+  ]);
   if (!policy) {
     console.log(`→ retrieve  no ${planCode} ${jurisdiction} policy in force on ${treatmentDate}`);
     return { evidence: [], selectedPolicy: null };
   }
 
   console.log(`→ retrieve  searches ${policy.title} ${policy.version}`);
-  const results = await retrieveQueries(policy, state.queries, hybridSearch);
-
-  const comparison = state.intent?.secondaryPlanCode
-    ? await findPolicyInForce(state.intent.secondaryPlanCode, jurisdiction, treatmentDate)
-    : null;
-  if (comparison) {
-    console.log(`→ retrieve  comparison searches ${comparison.title} ${comparison.version}`);
-    const comparisonResults = await retrieveQueries(comparison, state.queries, hybridSearch);
-    results.push(...comparisonResults);
+  const comparisonPolicies = comparison
+    ? [comparison]
+    : available.filter((candidate) => candidate.id !== policy.id);
+  const searches = [retrieveQueries(policy, state.queries, hybridSearch)];
+  if (comparisonPolicies.length > 0) {
+    for (const comparisonPolicy of comparisonPolicies) {
+      console.log(`→ retrieve  comparison searches ${comparisonPolicy.title} ${comparisonPolicy.version}`);
+      searches.push(retrieveQueries(comparisonPolicy, state.queries, hybridSearch));
+    }
   } else if (state.intent?.topic === 'comparison') {
-    console.log('→ retrieve  comparison: no second plan named, searching the member\'s plan only');
+    console.log('→ retrieve  comparison: no additional in-force policies, searching the member\'s plan only');
   }
+  const resultSets = await Promise.all(searches);
+  const results = resultSets.flat();
 
   results.forEach(({ query, hits, error, documentTitle }) => {
     if (error) console.error(`    ${`"${query}"`.padEnd(36)} search failed: ${error}`);
@@ -40,7 +52,7 @@ export async function retrieve(state: GraphState): Promise<GraphUpdate> {
   });
   const evidence: SearchHit[] = results.flatMap(({ hits }) => hits);
   console.log(`            returns ${evidence.length} chunks`);
-  return { evidence, queryEvidence: results, selectedPolicy: policy, comparisonPolicy: comparison };
+  return { evidence, queryEvidence: results, selectedPolicy: policy, comparisonPolicy: comparisonPolicies[0] ?? null, comparisonPolicies };
 }
 
 // "Gold Health Plan (France)" → "GOLD"; keeps comparison logs readable.

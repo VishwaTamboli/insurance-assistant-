@@ -19,7 +19,7 @@ export interface Tools {
 // A claim's citation marker is its position in the printed answer, so the [n]s always
 // line up with the citations array the API returns — even when a format prints a subset.
 function marked(claims: Claim[]): string[] {
-  return claims.map((claim, index) => `[${index + 1}] ${claim.text}`);
+  return claims.map((claim, index) => `${claim.text} [${index + 1}]`);
 }
 
 const ANSWERS: Record<FormatKind, (used: Claim[], tools: Tools) => string> = {
@@ -27,7 +27,7 @@ const ANSWERS: Record<FormatKind, (used: Claim[], tools: Tools) => string> = {
 
   short: (used) => marked(used).join('\n'),
 
-  bullets: (used) => used.map((claim, index) => `- [${index + 1}] ${claim.text}`).join('\n'),
+  bullets: (used) => used.map((claim, index) => `- ${claim.text} [${index + 1}]`).join('\n'),
 
   numbered: (used) => used.map((claim, index) => `${index + 1}. ${claim.text}`).join('\n'),
 
@@ -44,7 +44,7 @@ const ANSWERS: Record<FormatKind, (used: Claim[], tools: Tools) => string> = {
     }).join('\n'),
 
   example: (used) =>
-    `For example, the policy wording says: [1] ${used[0].text}`,
+    `For example, the policy wording says: ${used[0].text} [1]`,
 
   sources: (used, { sectionOf }) =>
     used.map((claim, index) => `${sectionOf(claim.chunkIds[0])} [${index + 1}]\n  "${claim.quote}"`).join('\n'),
@@ -53,8 +53,8 @@ const ANSWERS: Record<FormatKind, (used: Claim[], tools: Tools) => string> = {
     const policies = new Set(used.map((claim) => policyOf(claim.chunkIds[0])));
     const header = policies.size > 1 ? 'Policy | What the wording says' : 'Section | What your policy says';
     const cell = policies.size > 1
-      ? (claim: Claim, index: number) => `${policyOf(claim.chunkIds[0])} | [${index + 1}] ${claim.text}`
-      : (claim: Claim, index: number) => `${sectionOf(claim.chunkIds[0])} | [${index + 1}] ${claim.text}`;
+      ? (claim: Claim, index: number) => `${policyOf(claim.chunkIds[0])} | ${claim.text} [${index + 1}]`
+      : (claim: Claim, index: number) => `${sectionOf(claim.chunkIds[0])} | ${claim.text} [${index + 1}]`;
     return [header, '--- | ---', ...used.map(cell)].join('\n');
   },
 };

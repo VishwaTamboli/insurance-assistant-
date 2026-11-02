@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import type { Claim } from '../src/graph/state.ts';
 import type { SearchHit } from '../src/retrieval/search.ts';
 import { normalize, quoteIsReal, validateQuotes } from '../src/graph/nodes/quote-check.ts';
-import { pickClaims } from '../src/graph/nodes/render.ts';
+import { pickClaims, renderFallback } from '../src/graph/nodes/render.ts';
 import { checkMarkers, renumberMarkers } from '../src/graph/nodes/synthesize.ts';
 import type { Format } from '../src/graph/understanding.ts';
 
@@ -85,6 +85,19 @@ test('other formats print every claim', () => {
   for (const kind of ['bullets', 'numbered', 'detailed', 'table', 'steps', 'sources', 'direct'] as const) {
     assert.deepEqual(pickClaims(claims, { kind }, ''), claims);
   }
+});
+
+test('fallback list formatting keeps each point and citation together', () => {
+  const claims = [c('a', 'First condition.'), c('b', 'Second condition.')];
+  const tools = {
+    sectionOf: () => 'Conditions',
+    policyOf: () => 'GOLD',
+    format: { kind: 'bullets' as const },
+    used: claims,
+    subject: '',
+  };
+  assert.equal(renderFallback(claims, tools), '- First condition. [1]\n- Second condition. [2]');
+  assert.equal(renderFallback(claims, { ...tools, format: { kind: 'numbered' as const } }), '1. First condition.\n2. Second condition.');
 });
 
 // ---------- marker checks and renumbering (synthesize) ---------- //

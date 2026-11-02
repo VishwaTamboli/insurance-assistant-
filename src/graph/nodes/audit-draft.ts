@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { Audit, GraphState, GraphUpdate } from '../state.ts';
-import { chatModel } from '../../llm/chat.ts';
+import { chatModel, llmAttemptConfig } from '../../llm/chat.ts';
 import { quoteIsReal } from './quote-check.ts';
 import { log } from './log.ts';
 
@@ -52,7 +52,7 @@ export async function auditDraft(state: GraphState): Promise<GraphUpdate> {
   const parsed = await chatModel().withStructuredOutput(AuditSchema).invoke([
     ['system', SYSTEM_PROMPT],
     ['human', prompt(state)],
-  ]);
+  ], llmAttemptConfig());
 
   // Issues the model may not know about: a quote it never checked against the chunk text
   // (the researcher already drops most of these, but the check is cheap and final).

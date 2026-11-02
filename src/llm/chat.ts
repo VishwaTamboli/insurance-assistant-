@@ -12,6 +12,15 @@ import { config } from '../config.ts';
 // code change.
 export const CHAT_MODEL = process.env.CHAT_MODEL ?? 'gemini-3.8-flash';
 
+// A model attempt should not hold an SSE run forever. LangGraph's node retry policy
+// still gets to retry transient failures, while this bounds the time spent on any one
+// provider call (and lets the client receive a useful error/progress conclusion).
+export const LLM_ATTEMPT_TIMEOUT_MS = 30_000;
+
+export function llmAttemptConfig(): { signal: AbortSignal } {
+  return { signal: AbortSignal.timeout(LLM_ATTEMPT_TIMEOUT_MS) };
+}
+
 let cached: ChatGoogleGenerativeAI | null = null;
 
 // One shared instance (the wrapper keeps its own connection pool). Created on first use,

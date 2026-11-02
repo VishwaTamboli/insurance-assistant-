@@ -57,6 +57,23 @@ test('eligibility question detects eligibility', () => {
   assert.equal(result.topic, 'eligibility');
 });
 
+test('general eligibility questions search member and certificate wording', () => {
+  const result = understood('What are the eligibility requirements?');
+  assert.equal(result.topic, 'eligibility');
+  assert.equal(result.subject, '');
+  const queries = buildQueries(result.subject, result.aspects, result.country);
+  assert.ok(queries.includes('member named on the Certificate of Insurance'));
+  assert.ok(queries.includes('eligibility'));
+});
+
+test('enrolment and age questions use eligibility retrieval', () => {
+  for (const question of ['Who can enrol in the Gold plan?', 'What are the age requirements?', 'What documents are needed for enrolment?']) {
+    const result = understood(question);
+    assert.equal(result.topic, 'eligibility', question);
+    assert.ok(result.aspects.includes('eligibility'), question);
+  }
+});
+
 test('limit question detects limit', () => {
   const result = understood('Is there an annual limit on claims?');
   assert.equal(result.topic, 'limit');
@@ -73,6 +90,14 @@ test('comparison question is the primary topic with the other plan named', () =>
   assert.equal(result.topic, 'comparison');
   assert.equal(result.secondaryPlanCode, 'PLATINUM');
   assert.equal(result.format.kind, 'table', 'comparisons default to a table');
+});
+
+test('available-policy comparison is detected without a named plan', () => {
+  const result = understood('Which of the available policies provides the highest coverage?');
+  assert.equal(result.topic, 'comparison');
+  assert.equal(result.secondaryPlanCode, null);
+  assert.equal(result.subject, '');
+  assert.equal(result.format.kind, 'table');
 });
 
 test('multi-aspect question carries every aspect', () => {

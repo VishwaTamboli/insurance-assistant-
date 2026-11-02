@@ -25,8 +25,8 @@ export function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand-lockup">
-          <div className="brand-mark" aria-hidden="true">+</div>
-          <div><strong>coverly</strong><span>policy copilot</span></div>
+          <img className="brand-logo" src="/policybridge-logo.svg" alt="" />
+          <div><strong>PolicyBridge</strong><span>Your AI-powered insurance companion.</span></div>
         </div>
         <button type="button" className="new-chat-button" onClick={reset} disabled={pending}>
           <span aria-hidden="true">＋</span> New conversation
@@ -45,8 +45,8 @@ export function App() {
 
       <section className="workspace">
         <header className="topbar">
-          <div className="mobile-brand"><div className="brand-mark small" aria-hidden="true">+</div><strong>coverly</strong></div>
-          <div className="topbar-title"><span className="eyebrow">PERSONAL COVERAGE</span><h1>Insurance copilot</h1></div>
+          <div className="mobile-brand"><img className="brand-logo small" src="/policybridge-logo.svg" alt="" /><strong>PolicyBridge</strong></div>
+          <div className="topbar-title"><span className="eyebrow">PERSONAL COVERAGE</span><h1>AI Insurance Assistant</h1></div>
           <PolicyBar planCode={planCode} jurisdiction={jurisdiction} onPlanChange={setPlanCode} onJurisdictionChange={setJurisdiction} />
         </header>
 

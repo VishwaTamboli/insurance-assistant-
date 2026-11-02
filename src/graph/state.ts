@@ -75,6 +75,10 @@ export const State = Annotation.Root({
   // A second policy in force, only for comparison questions that name another plan
   // ("GOLD vs PLATINUM"): the same jurisdiction and effective-date rules apply to it.
   comparisonPolicy: Annotation<PolicyDocument | null>,
+  comparisonPolicies: Annotation<PolicyDocument[]>({
+    reducer: (_current, update) => update,
+    default: () => [],
+  }),
 
   draft: Annotation<Draft>,
   audit: Annotation<Audit | null>, // null while a new draft waits for its audit

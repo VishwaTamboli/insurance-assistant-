@@ -59,7 +59,7 @@ const OUT_OF_SCOPE: Array<{ pattern: RegExp; topic: string }> = [
 // not define "the waiting period"; "What is not mentioned?" is a missing-info request.
 const ASPECT_RULES: Array<{ aspect: Aspect; pattern: RegExp }> = [
   { aspect: 'missing-information', pattern: /\b(not mentioned|not say|does(?:n't| not) mention|nothing about|anything about|never mentioned)\b/i },
-  { aspect: 'comparison', pattern: /\b(compar(?:e|ison|ing|ed)|versus|vs\b|difference between)\b/i },
+  { aspect: 'comparison', pattern: /\b(compar(?:e|ison|ing|ed)|versus|vs\b|difference between|which (?:policy|plan)|available policies|highest coverage|best coverage|most coverage|lowest cost|least expensive)\b/i },
   { aspect: 'summary-request', pattern: /\b(summar(?:y|ise|ize)|key points|highlights|in brief|nutshell)\b/i },
   { aspect: 'exclusion', pattern: /\b(exclusions?|excluded|not covered|not paid for|won'?t pay|do(?:es)? ?not pay for|not include[ds]?)\b/i },
   { aspect: 'waiting-period', pattern: /\bwaiting period|have to wait|how long (?:until|before) \w+(?:s)? wait/i },
@@ -67,7 +67,7 @@ const ASPECT_RULES: Array<{ aspect: Aspect; pattern: RegExp }> = [
   { aspect: 'scenario', pattern: /\b(if i |if we |suppose|what happens (?:now )?if|in case of|let'?s say|imagine)\b/i },
   { aspect: 'source-specific', pattern: /\b(which section|what section|which chapter|show me the source|cite the)\b/i },
   { aspect: 'definition', pattern: /\b(definitions?|define[sd]?|what does .+ mean|meaning of|what is meant by)\b/i },
-  { aspect: 'eligibility', pattern: /\b(?:eligib|do i qualify|qualif[ie])/i },
+  { aspect: 'eligibility', pattern: /\b(?:eligib\w*|qualif\w*|enrol\w*|enroll\w*|join\w*|membership|who can)\b|\b(?:age|residen(?:cy|t)|documents?)\s+requirements?\b/i },
   { aspect: 'limit', pattern: /\b(limits?|maximum|max\b|capped|annual cap)\b/i },
   { aspect: 'cost', pattern: /\b(cost|price|excess|deductible|co.?pay|reimburse|paid for claim|how much .+ pays?|how much .+ costs?)\b/i },
   { aspect: 'benefit', pattern: /\b(benefits?|entitled?|entitlement)\b/i },
@@ -195,6 +195,8 @@ const STOP_WORDS = new Set([
   'definitions', 'define', 'mean', 'meaning', 'meant', 'mentioned', 'mention', 'eligible', 'eligibility',
   'qualify', 'limit', 'limits', 'maximum', 'excess', 'deductible', 'cost', 'costs', 'points', 'point', 'key', 'main',
   'steps', 'step', 'example', 'details', 'first', 'second', 'third', 'fourth', 'fifth', 'make', 'made', 'only',
+  'requirement', 'requirements', 'enrol', 'enrolment', 'enroll', 'enrollment', 'join', 'membership', 'member', 'of', 'plan',
+  'policy', 'policies', 'available', 'provides', 'highest', 'lowest', 'best', 'most', 'least',
   'pre', 'just',
   'up', 'us', 'use', 'want', 'was', 'way', 'we', 'were', 'what', 'when', 'where', 'which', 'while', 'who', 'why',
   'will', 'with', 'without', 'would', 'you', 'your', 'covered', 'covers', 'cover', 'covering', 'coverage',

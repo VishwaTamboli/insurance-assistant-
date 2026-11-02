@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { Claim, Draft, GraphState, GraphUpdate } from '../state.ts';
-import { chatModel } from '../../llm/chat.ts';
+import { chatModel, llmAttemptConfig } from '../../llm/chat.ts';
 import { validateQuotes } from './quote-check.ts';
 import { log } from './log.ts';
 
@@ -39,7 +39,7 @@ co-pays, pre-authorisation rules and territorial limits. One fact per claim, in 
 English, in your own words. Write at most ${MAX_CLAIMS} claims, ordered by how strongly
 each chunk answers the question; skip chunks that don't answer it. If the evidence does
 not answer part of the question, list that part in \`unanswered\`. Never guess.
-When two policies are in the evidence, the draft MUST include comparable facts for BOTH\npolicies — one claim per policy per point, each claim's own text naming its policy (\"The\nGold plan …\", \"The Platinum plan …\"); a comparison draft with only one policy's facts is\nincomplete.`;
+When more than one policy is in the evidence, the draft MUST include comparable facts for\nALL represented policies — one claim per policy per point, each claim's own text naming\nits policy (\"The Gold plan …\", \"The Platinum plan …\"); a comparison draft with only one\npolicy's facts is incomplete.`;
 
 export async function research(state: GraphState): Promise<GraphUpdate> {
   // Nothing retrieved at all (no policy in force, or every query failed): no model call —
@@ -53,7 +53,7 @@ export async function research(state: GraphState): Promise<GraphUpdate> {
   const parsed = await chatModel().withStructuredOutput(DraftSchema).invoke([
     ['system', SYSTEM_PROMPT],
     ['human', prompt(state)],
-  ]);
+  ], llmAttemptConfig());
 
   const { kept, dropped } = validateQuotes(parsed.claims, chunksById);
   const claims: Claim[] = kept.map((claim) => ({
@@ -148,8 +148,8 @@ function prompt(state: GraphState): string {
       }).join('\n') || '- (no specific issues): the evidence does not answer the question, and the draft was rejected'}`
     : 'Auditor feedback: none (first attempt).';
 
-  const comparison = state.intent?.secondaryPlanCode
-    ? `The run compares ${planNames(state)}: give the comparable facts for both policies, one claim per policy per point.`
+  const comparison = state.intent?.topic === 'comparison'
+    ? `The run compares ${planNames(state)}: give comparable facts for every represented policy, one claim per policy per point.`
     : 'Single policy: the claim text does not have to repeat the policy name.';
 
   return `Question: ${state.question}

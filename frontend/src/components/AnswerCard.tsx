@@ -1,4 +1,5 @@
 import type { AnswerResponse } from '../api/types';
+import { AnswerMarkdown } from './AnswerMarkdown';
 
 // Renders one assistant answer according to how the run ended (the server's status, not
 // any client-side judgment): answered with citations, human-review with its amber note,
@@ -22,7 +23,7 @@ export function AnswerCard({ response }: { response: AnswerResponse }) {
 
       {response.policy && <PolicyHeading policy={response.policy} />}
 
-      <p className="answer-copy">{response.answer}</p>
+      <AnswerMarkdown text={response.answer} />
 
       {response.status === 'answered' && response.unanswered.length > 0 && (
         <p className="unanswered-note">
@@ -77,13 +78,13 @@ function Citations({ citations }: { citations: string[] }) {
 // The actual policy wording each citation rests on, folded away to keep the chat calm.
 function Sources({ sources }: { sources: AnswerResponse['sources'] }) {
   return (
-    <details className="sources">
-      <summary>View policy wording <span>({sources.length} {sources.length === 1 ? 'section' : 'sections'})</span>
+    <details className="sources policy-sources">
+      <summary className="policy-sources-title">View policy wording <span>({sources.length} {sources.length === 1 ? 'section' : 'sections'})</span>
       </summary>
       <div className="source-list">
         {sources.map(source => (
           <details key={source.id} className="source-item">
-            <summary>{source.section}<span>+</span></summary>
+            <summary className="policy-section-heading">{source.section}<span aria-hidden="true">⌄</span></summary>
             <p>{source.content}</p>
           </details>
         ))}

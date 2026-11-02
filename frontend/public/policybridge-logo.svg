@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">PolicyBridge</title>
+  <desc id="desc">A navy shield containing a blue policy document and bridge mark</desc>
+  <path fill="#102443" d="M32 4 54 12v17c0 14.3-8.5 25.4-22 31C18.5 54.4 10 43.3 10 29V12L32 4Z"/>
+  <path fill="#4E86EA" d="M32 10.2 48 16v13c0 10.4-5.7 18.7-16 23.3C21.7 47.7 16 39.4 16 29V16l16-5.8Z"/>
+  <path fill="#fff" d="M24 18h14l6 6v15.5A3.5 3.5 0 0 1 40.5 43h-17a3.5 3.5 0 0 1-3.5-3.5v-18a3.5 3.5 0 0 1 3.5-3.5Z"/>
+  <path fill="#DCE9FF" d="M38 18v6h6z"/>
+  <path fill="#17335E" d="M26 29h12a2 2 0 1 0 0-4H26a2 2 0 1 0 0 4Zm0 7h12a2 2 0 1 0 0-4H26a2 2 0 1 0 0 4Z"/>
+  <path fill="#4E86EA" d="M18 47.5c4.4 4.8 9.2 8 14 10.1 4.8-2.1 9.6-5.3 14-10.1-4.6 2.8-9.3 4.2-14 4.2s-9.4-1.4-14-4.2Z"/>
+</svg>

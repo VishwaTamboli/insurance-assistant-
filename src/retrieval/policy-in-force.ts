@@ -42,3 +42,28 @@ export async function findPolicyInForce(
 
   return rows[0] ?? null;
 }
+
+// All policies currently available in one jurisdiction on the same treatment date.
+// Ordinary questions do not call this; it is reserved for explicit comparisons without
+// a named second plan.
+export async function findPoliciesInForce(jurisdiction: string, date: string): Promise<PolicyDocument[]> {
+  const { rows } = await pool.query<PolicyDocument>(
+    `SELECT id, plan_code AS "planCode", jurisdiction, version, title,
+            effective_from::text AS "effectiveFrom",
+            effective_to::text   AS "effectiveTo"
+     FROM policy_documents
+     WHERE jurisdiction = $1
+       AND effective_from <= $2
+       AND (effective_to IS NULL OR effective_to >= $2)
+     ORDER BY plan_code`,
+    [jurisdiction, date],
+  );
+  const versions = new Map<string, string[]>();
+  for (const row of rows) versions.set(row.planCode, [...(versions.get(row.planCode) ?? []), row.version]);
+  for (const [planCode, activeVersions] of versions) {
+    if (activeVersions.length > 1) {
+      throw new Error(`${planCode} ${jurisdiction}: ${activeVersions.length} versions in force on ${date} (${activeVersions.join(', ')}). Fix their effective dates.`);
+    }
+  }
+  return rows;
+}

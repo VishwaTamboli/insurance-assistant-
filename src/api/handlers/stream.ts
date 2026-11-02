@@ -25,6 +25,8 @@ export async function handleAskStream(
   res: ServerResponse,
   input: AnswerRequest,
 ): Promise<void> {
+  const started = performance.now();
+  let firstNodeAt: number | null = null;
   // A disconnect can happen anywhere in the loop; every write checks this flag first.
   let closed = false;
   const onDisconnect = () => {
@@ -53,6 +55,7 @@ export async function handleAskStream(
       for (const [node, update] of Object.entries(chunk as Record<string, GraphUpdate>)) {
         if (closed) break;
         if (!update || Object.keys(update).length === 0) continue;
+        firstNodeAt ??= performance.now();
 
         mergeUpdate(partial, update);
         for (const { event, data } of nodeEvents(node, update)) {
@@ -75,6 +78,9 @@ export async function handleAskStream(
     req.off('close', onDisconnect);
     res.off('error', onDisconnect);
     if (!res.writableEnded) res.end();
+    const totalMs = Math.round(performance.now() - started);
+    const firstNodeMs = firstNodeAt === null ? 'n/a' : `${Math.round(firstNodeAt - started)}ms`;
+    console.log(`[timing] api/ask/stream total=${totalMs}ms first-node=${firstNodeMs} closed=${closed} failed=${failed}`);
   }
 }
 

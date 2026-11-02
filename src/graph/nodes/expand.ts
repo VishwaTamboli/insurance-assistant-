@@ -20,7 +20,16 @@ const ANCHORS: Record<Aspect, string[]> = {
   'waiting-period': ['waiting period'],
   'pre-authorisation': ['pre-authorisation', 'notify emergency admission'],
   cost: ['excess claim', 'cost sharing deductible'],
-  eligibility: ['cover you the member'],
+  // Eligibility questions need the policy's actual enrolment vocabulary. The Gold FR
+  // document expresses this through the Definitions section and the Certificate of
+  // Insurance rather than a standalone "eligibility" heading.
+  eligibility: [
+    'eligibility',
+    'eligible members',
+    'member named on the Certificate of Insurance',
+    'membership enrolment',
+    'age residency enrolment requirements',
+  ],
   limit: ['annual limit'],
   definition: ['Definitions'],
   scenario: ['emergency treatment', 'Exclusions', 'waiting period'],
