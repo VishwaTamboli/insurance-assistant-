@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 // A small, dependency-free Markdown subset for model answers. The backend keeps the
 // answer text and citation markers as-is; this only turns the safe, expected structures
 // (headings, paragraphs, lists and comparison tables) into readable HTML.
-export function AnswerMarkdown({ text }: { text: string }) {
+export function AnswerMarkdown({ text, citationPrefix = 'citation' }: { text: string; citationPrefix?: string }) {
   const lines = normalizeMarkdownLines(text);
   const blocks: ReactNode[] = [];
   let index = 0;
@@ -14,7 +14,7 @@ export function AnswerMarkdown({ text }: { text: string }) {
     // Keep soft line breaks inside a paragraph. The CSS on .answer-markdown p uses
     // white-space: pre-wrap, so the model's intentional line breaks remain visible.
     const value = paragraph.join('\n');
-    blocks.push(<p key={`p-${blocks.length}`}><InlineText text={value} /></p>);
+    blocks.push(<p key={`p-${blocks.length}`}><InlineText text={value} citationPrefix={citationPrefix} /></p>);
     paragraph = [];
   };
 
@@ -29,14 +29,14 @@ export function AnswerMarkdown({ text }: { text: string }) {
       while (index < lines.length && lines[index].includes('|') && lines[index].trim() !== '') {
         rows.push(splitTableLine(lines[index])); index += 1;
       }
-      blocks.push(<MarkdownTable key={`table-${blocks.length}`} rows={rows} />);
+      blocks.push(<MarkdownTable key={`table-${blocks.length}`} rows={rows} citationPrefix={citationPrefix} />);
       continue;
     }
 
     const heading = line.match(/^(?:#{1,3}\s+|\*\*)(.+?)(?:\*\*)?$/);
     if (heading && (line.startsWith('#') || line.startsWith('**'))) {
       flushParagraph();
-      blocks.push(<h3 key={`h-${blocks.length}`}><InlineText text={heading[1].replace(/\*\*$/, '')} /></h3>);
+      blocks.push(<h3 key={`h-${blocks.length}`}><InlineText text={heading[1].replace(/\*\*$/, '')} citationPrefix={citationPrefix} /></h3>);
       index += 1; continue;
     }
 
@@ -53,7 +53,7 @@ export function AnswerMarkdown({ text }: { text: string }) {
         index += 1;
       }
       const List = ordered ? 'ol' : 'ul';
-      blocks.push(<List key={`list-${blocks.length}`}>{items.map((item, itemIndex) => <li key={itemIndex}><InlineText text={item} /></li>)}</List>);
+      blocks.push(<List key={`list-${blocks.length}`}>{items.map((item, itemIndex) => <li key={itemIndex}><InlineText text={item} citationPrefix={citationPrefix} /></li>)}</List>);
       continue;
     }
 
@@ -61,7 +61,7 @@ export function AnswerMarkdown({ text }: { text: string }) {
     // blank line. Other adjacent lines become a normal paragraph.
     if (/^\s*\[\d+\]/.test(line) || /^\s*Step\s+\d+:/i.test(line)) {
       flushParagraph();
-      blocks.push(<p key={`line-${blocks.length}`}><InlineText text={line} /></p>);
+      blocks.push(<p key={`line-${blocks.length}`}><InlineText text={line} citationPrefix={citationPrefix} /></p>);
     } else {
       paragraph.push(line);
     }
@@ -94,18 +94,25 @@ export function normalizeMarkdownLines(text: string): string[] {
     .replace(/\r\n/g, '\n')
     .split('\n');
 
+  // The synthesizer normally emits one cited claim per line, but a valid model
+  // response can arrive as one paragraph. Split only at sentence boundaries that
+  // immediately follow a citation marker, and only when there are at least two such
+  // points. This keeps citations attached to their sentence and avoids changing prose
+  // where a citation is used mid-sentence or where two citations support one sentence.
+  const citedLines = rawLines.flatMap(splitCitedParagraph);
+
   // Some model responses put the ordinal at the end of the sentence, e.g.
   // "Emergency treatment is covered [1]. 1.". When at least two lines use that
   // pattern, treat it as a malformed ordered list and move each number to the front.
   // Requiring a repeated pattern avoids rewriting ordinary prose such as "see page 1.".
-  const trailingNumbers = rawLines.map(line => line.match(/^(.+?)\s+(\d+)[.)]\s*$/));
+  const trailingNumbers = citedLines.map(line => line.match(/^(.+?)\s+(\d+)[.)]\s*$/));
   const trailingListCount = trailingNumbers.filter(Boolean).length;
   const normalizedLines = trailingListCount >= 2
-    ? rawLines.map((line, index) => {
+    ? citedLines.map((line, index) => {
         const match = trailingNumbers[index];
         return match ? `${match[2]}. ${match[1].trim()}` : line;
       })
-    : rawLines;
+    : citedLines;
 
   // Markdown permits blank lines inside a list. Keep those items in one semantic
   // <ol>/<ul>; otherwise React renders two separate <ol>s and the browser restarts
@@ -126,18 +133,36 @@ export function normalizeMarkdownLines(text: string): string[] {
     });
 }
 
+function splitCitedParagraph(line: string): string[] {
+  if ((line.match(/\[\d+\]/g) ?? []).length < 2) return [line];
+
+  const boundaries = [...line.matchAll(/\[\d+\](?:[.!?])(?=\s+\S|$)|\[\d+\]$/g)];
+  if (boundaries.length < 2) return [line];
+
+  const points: string[] = [];
+  let start = 0;
+  for (const boundary of boundaries) {
+    const end = (boundary.index ?? 0) + boundary[0].length;
+    points.push(line.slice(start, end).trim());
+    start = end;
+  }
+  if (line.slice(start).trim() !== '') return [line];
+
+  return points.map((point, index) => `${index + 1}. ${point}`);
+}
+
 function listKind(line: string): 'ordered' | 'unordered' | null {
   if (/^\s*\d+[.)]\s+/.test(line)) return 'ordered';
   if (/^\s*[-*+]\s+/.test(line)) return 'unordered';
   return null;
 }
 
-function InlineText({ text }: { text: string }) {
+function InlineText({ text, citationPrefix }: { text: string; citationPrefix: string }) {
   const parts = text.split(/(\*\*[^*]+\*\*|\[\d+\])/g);
   return <>{parts.map((part, index) => part.match(/^\*\*[^*]+\*\*$/)
     ? <strong key={index}>{part.slice(2, -2)}</strong>
     : part.match(/^\[\d+\]$/)
-      ? <span className="citation-marker" key={index}>{part}</span>
+      ? <a className="citation-marker" href={`#${citationPrefix}-${part.slice(1, -1)}`} key={index}>{part}</a>
       : <span key={index}>{part}</span>)}</>;
 }
 
@@ -149,7 +174,7 @@ function splitTableLine(line: string): string[] {
   return line.trim().replace(/^\|\s*|\s*\|$/g, '').split('|').map(cell => cell.trim());
 }
 
-function MarkdownTable({ rows }: { rows: string[][] }) {
+function MarkdownTable({ rows, citationPrefix }: { rows: string[][]; citationPrefix: string }) {
   const [header, ...body] = rows;
-  return <div className="answer-table-wrap"><table><thead><tr>{header.map((cell, index) => <th key={index}><InlineText text={cell} /></th>)}</tr></thead><tbody>{body.map((row, rowIndex) => <tr key={rowIndex}>{row.map((cell, cellIndex) => <td key={cellIndex}><InlineText text={cell} /></td>)}</tr>)}</tbody></table></div>;
+  return <div className="answer-table-wrap"><table><thead><tr>{header.map((cell, index) => <th key={index}><InlineText text={cell} citationPrefix={citationPrefix} /></th>)}</tr></thead><tbody>{body.map((row, rowIndex) => <tr key={rowIndex}>{row.map((cell, cellIndex) => <td key={cellIndex}><InlineText text={cell} citationPrefix={citationPrefix} /></td>)}</tr>)}</tbody></table></div>;
 }

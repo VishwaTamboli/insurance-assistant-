@@ -101,7 +101,7 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`[api] listening on http://localhost:${PORT}`);
   console.log('[api] routes: GET /api/health, POST /api/ask, POST /api/ask/stream');
 });

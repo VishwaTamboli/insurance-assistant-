@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import type { AnswerResponse } from '../api/types';
 import { AnswerMarkdown } from './AnswerMarkdown';
 
@@ -13,6 +14,7 @@ const STATUS_BADGE: Record<AnswerResponse['status'], { label: string; className:
 
 export function AnswerCard({ response }: { response: AnswerResponse }) {
   const badge = STATUS_BADGE[response.status];
+  const citationPrefix = `citation-${useId().replace(/:/g, '')}`;
 
   return (
     <article className={`answer-card status-${response.status}`}>
@@ -23,7 +25,7 @@ export function AnswerCard({ response }: { response: AnswerResponse }) {
 
       {response.policy && <PolicyHeading policy={response.policy} />}
 
-      <AnswerMarkdown text={response.answer} />
+      <AnswerMarkdown text={response.answer} citationPrefix={citationPrefix} />
 
       {response.status === 'answered' && response.unanswered.length > 0 && (
         <p className="unanswered-note">
@@ -31,7 +33,7 @@ export function AnswerCard({ response }: { response: AnswerResponse }) {
         </p>
       )}
 
-      {response.citations.length > 0 && <Citations citations={response.citations} />}
+      {response.citations.length > 0 && <Citations citations={response.citations} citationPrefix={citationPrefix} />}
       {response.sources.length > 0 && <Sources sources={response.sources} />}
       {response.audit && (
         <AuditNote verdict={response.audit.verdict} confidence={response.audit.confidence} revisions={response.revisions} />
@@ -60,13 +62,13 @@ function PolicyHeading({ policy }: { policy: AnswerResponse['policy'] }) {
 }
 
 // The sections `[1]`, `[2]`… in the answer text stand for, in order.
-function Citations({ citations }: { citations: string[] }) {
+function Citations({ citations, citationPrefix }: { citations: string[]; citationPrefix: string }) {
   return (
     <div className="citations">
       <h3>Cited sections</h3>
       <ol>
         {citations.map((section, index) => (
-          <li key={section}><span>[{index + 1}]</span>
+          <li id={`${citationPrefix}-${index + 1}`} key={section}><span>[{index + 1}]</span>
             {section}
           </li>
         ))}
