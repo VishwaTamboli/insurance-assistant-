@@ -8,7 +8,7 @@ import type { Claim } from '../src/graph/state.ts';
 import type { SearchHit } from '../src/retrieval/search.ts';
 import { normalize, quoteIsReal, validateQuotes } from '../src/graph/nodes/quote-check.ts';
 import { pickClaims, renderFallback } from '../src/graph/nodes/render.ts';
-import { checkMarkers, renumberMarkers } from '../src/graph/nodes/synthesize.ts';
+import { checkMarkers, renumberMarkers, synthesize } from '../src/graph/nodes/synthesize.ts';
 import type { Format } from '../src/graph/understanding.ts';
 
 // ---------- quote verification (research node) ---------- //
@@ -98,6 +98,37 @@ test('fallback list formatting keeps each point and citation together', () => {
   };
   assert.equal(renderFallback(claims, tools), '- First condition. [1]\n- Second condition. [2]');
   assert.equal(renderFallback(claims, { ...tools, format: { kind: 'numbered' as const } }), '1. First condition.\n2. Second condition.');
+});
+
+test('synthesis renders audited claims deterministically with policy citations', async () => {
+  const claims = [
+    c('a', 'GOLD pays 80% for physiotherapy.'),
+    c('b', 'PLATINUM pays 100% for physiotherapy.'),
+  ];
+  const result = await synthesize({
+    audit: { verdict: 'pass', issues: [], confidence: 0.9 },
+    draft: { claims, unanswered: [] },
+    intent: { format: { kind: 'table' }, subject: 'physiotherapy' },
+    evidence: [
+      chunk('chunk-a', 'GOLD wording'),
+      chunk('chunk-b', 'PLATINUM wording'),
+    ],
+    queryEvidence: [
+      { query: 'gold', documentTitle: 'GOLD', hits: [chunk('chunk-a', 'GOLD wording')] },
+      { query: 'platinum', documentTitle: 'PLATINUM', hits: [chunk('chunk-b', 'PLATINUM wording')] },
+    ],
+  } as never);
+
+  assert.deepEqual(result.final, {
+    answer: [
+      'Policy | What the wording says',
+      '--- | ---',
+      'GOLD | GOLD pays 80% for physiotherapy. [1]',
+      'PLATINUM | PLATINUM pays 100% for physiotherapy. [2]',
+    ].join('\n'),
+    citations: ['chunk-a', 'chunk-b'],
+    confidence: 0.9,
+  });
 });
 
 // ---------- marker checks and renumbering (synthesize) ---------- //

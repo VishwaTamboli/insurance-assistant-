@@ -52,7 +52,7 @@ BEGIN
       ALTER COLUMN embedding DROP NOT NULL;
     UPDATE policy_chunks
       SET embedding = NULL;
-    ALTER TABLE policy_chunks
+   ALTER TABLE policy_chunks
       ALTER COLUMN embedding TYPE vector(768)
       USING embedding::text::vector;
   END IF;
